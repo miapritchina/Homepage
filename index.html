@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Mia Pritchina — Projects</title>
+<meta name="description" content="An index of things Mia Pritchina has built and put on the web." />
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2ede2" />
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16150f" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Mia Pritchina — Projects" />
+<meta property="og:description" content="An index of things built and put on the web." />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='4' fill='%23b23a2b'/%3E%3Ctext x='16' y='23' font-family='Georgia,serif' font-size='19' fill='%23f2ede2' text-anchor='middle'%3EM%3C/text%3E%3C/svg%3E" />
+
+<style>
+  :root {
+    --paper:      #f2ede2;
+    --paper-warm: #e9e2d3;
+    --ink:        #1c1a15;
+    --muted:      #6b6455;
+    --seal:       #b23a2b;
+    --rule:       #1c1a1520;
+
+    --display: "Instrument Serif", "Iowan Old Style", Palatino, Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    --measure: 68rem;
+    --ease: cubic-bezier(0.22, 0.68, 0.3, 1);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:      #16150f;
+      --paper-warm: #1e1c14;
+      --ink:        #ece5d5;
+      --muted:      #948b78;
+      --seal:       #d4543f;
+      --rule:       #ece5d51f;
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  html {
+    background: var(--paper);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100svh;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.6;
+    font-weight: 400;
+    /* A soft warm bloom from the top-left keeps the flat paper colour from
+       reading as a plain background fill. */
+    background:
+      radial-gradient(120% 80% at 12% -10%, var(--paper-warm) 0%, transparent 60%),
+      var(--paper);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Paper grain. Fixed so it sits still while the page scrolls under it. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9;
+    opacity: 0.35;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    body::after { mix-blend-mode: screen; opacity: 0.16; }
+  }
+
+  a { color: inherit; }
+
+  .wrap {
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: clamp(2.5rem, 7vw, 6rem) clamp(1.25rem, 5vw, 3.5rem) 5rem;
+  }
+
+  /* ---------- masthead ---------- */
+
+  .masthead {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(1rem, 3vw, 2rem);
+    align-items: start;
+    padding-bottom: clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .seal {
+    width: 3.25rem;
+    height: 3.25rem;
+    flex: none;
+    display: grid;
+    place-items: center;
+    background: var(--seal);
+    color: var(--paper);
+    font-family: var(--display);
+    font-size: 1.9rem;
+    line-height: 1;
+    padding-bottom: 0.15em;
+    border-radius: 3px;
+    /* Slight rotation so the seal reads as stamped rather than placed. */
+    transform: rotate(-3deg);
+    box-shadow: 0 1px 0 #0000001a;
+  }
+
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(2.6rem, 9vw, 5.25rem);
+    line-height: 0.95;
+    letter-spacing: -0.015em;
+    margin: -0.12em 0 0;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--seal);
+  }
+
+  .standfirst {
+    margin: 1.25rem 0 0;
+    max-width: 42ch;
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.7;
+  }
+
+  .standfirst a {
+    color: var(--ink);
+    text-decoration-color: var(--seal);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  .standfirst a:hover { color: var(--seal); }
+
+  /* ---------- section headings ---------- */
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin: clamp(2rem, 6vw, 4rem) 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--ink);
+  }
+
+  .section-head h2 {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .section-head .count {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* ---------- the index ---------- */
+
+  .index { list-style: none; margin: 0; padding: 0; }
+
+  .entry {
+    position: relative;
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr) auto;
+    gap: 0 clamp(1rem, 3vw, 2rem);
+    align-items: start;
+    padding: clamp(1.5rem, 3.5vw, 2.25rem) 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* Hover wash bleeds past the text column so the whole row lights up.
+     Kept at z-index 0 rather than -1: a negative index would paint beneath
+     body's own background and never be seen. */
+  .entry::before {
+    content: "";
+    position: absolute;
+    inset: 0 -1.25rem;
+    background: var(--paper-warm);
+    opacity: 0;
+    transition: opacity 0.35s var(--ease);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .entry:hover::before { opacity: 0.85; }
+
+  /* ...which means every child needs to be lifted above it. */
+  .num, .title, .desc, .tags { position: relative; z-index: 1; }
+
+  .num {
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    padding-top: 0.65em;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.3s var(--ease);
+  }
+  .entry:hover .num { color: var(--seal); }
+
+  .body { min-width: 0; }
+
+  .title {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(1.6rem, 4.4vw, 2.4rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+
+  .title a {
+    text-decoration: none;
+    background-image: linear-gradient(var(--seal), var(--seal));
+    background-repeat: no-repeat;
+    background-position: 0 92%;
+    background-size: 0% 1px;
+    transition: background-size 0.4s var(--ease), color 0.3s var(--ease);
+  }
+
+  .entry:hover .title a,
+  .title a:focus-visible {
+    background-size: 100% 1px;
+  }
+
+  /* The whole card is clickable via this stretched link, but the visible
+     anchor text stays the title for screen readers and status-bar previews. */
+  .title a::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+
+  .cjk {
+    font-family: var(--display);
+    color: var(--muted);
+    font-size: 0.85em;
+    margin-left: 0.4em;
+    white-space: nowrap;
+  }
+
+  .desc {
+    margin: 0.6rem 0 0;
+    max-width: 52ch;
+    color: var(--muted);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+  }
+
+  .tags {
+    margin: 0.9rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.5rem;
+  }
+
+  .tags li {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .links {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.4rem;
+    padding-top: 0.5rem;
+    /* Sits above the stretched title link so Source stays clickable. */
+    position: relative;
+    z-index: 2;
+  }
+
+  .links a {
+    font-size: 0.7rem;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: color 0.25s var(--ease);
+  }
+
+  .links a:hover { color: var(--seal); }
+
+  .links .live {
+    color: var(--ink);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .links .live::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--seal);
+    flex: none;
+  }
+
+  .entry:hover .links .live { color: var(--seal); }
+
+  /* ---------- archive: same data, quieter ---------- */
+
+  .index--archive .entry { padding: 1rem 0; }
+  .index--archive .title { font-size: clamp(1.05rem, 2.6vw, 1.3rem); }
+  .index--archive .desc { margin-top: 0.3rem; }
+
+  /* ---------- footer ---------- */
+
+  footer {
+    margin-top: clamp(3rem, 8vw, 5rem);
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--seal); }
+
+  /* ---------- entrance ---------- */
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(0.9rem); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  @keyframes stamp {
+    from { opacity: 0; transform: rotate(9deg) scale(1.5); }
+    to   { opacity: 1; transform: rotate(-3deg) scale(1); }
+  }
+
+  .reveal {
+    opacity: 0;
+    animation: rise 0.75s var(--ease) forwards;
+    animation-delay: calc(var(--i, 0) * 70ms + 120ms);
+  }
+
+  .seal {
+    opacity: 0;
+    animation: stamp 0.5s var(--ease) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reveal, .seal { animation: none; opacity: 1; transform: none; }
+    .seal { transform: rotate(-3deg); }
+    * { transition-duration: 0.01ms !important; }
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--seal);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ---------- narrow screens ---------- */
+
+  @media (max-width: 46rem) {
+    .entry {
+      grid-template-columns: 2.25rem minmax(0, 1fr);
+    }
+    .links {
+      grid-column: 2;
+      flex-direction: row;
+      align-items: center;
+      gap: 1.25rem;
+      justify-content: flex-start;
+      padding-top: 1rem;
+    }
+    .masthead { grid-template-columns: 1fr; }
+    .seal { transform: rotate(-3deg); }
+  }
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="seal" aria-hidden="true">M</div>
+    <div>
+      <h1 class="reveal" style="--i:0">Mia<br />Pritchina<em>.</em></h1>
+      <p class="standfirst reveal" style="--i:1">
+        An index of things I&rsquo;ve built and put on the web &mdash; mostly small,
+        self-contained tools for painting, language and music. Everything below is
+        live, and every source is on
+        <a href="https://github.com/miapritchina">GitHub</a>.
+      </p>
+    </div>
+  </header>
+
+  <section aria-labelledby="current">
+    <div class="section-head reveal" style="--i:2">
+      <h2 id="current">Recent</h2>
+      <span class="count">Three</span>
+    </div>
+
+    <ol class="index">
+
+      <li class="entry reveal" style="--i:3">
+        <div class="num">01</div>
+        <div class="body">
+          <h3 class="title">
+            <a href="https://miapritchina.github.io/paintwheel/">Paintwheel</a>
+          </h3>
+          <p class="desc">
+            A real-time wet-watercolour simulator running in the browser. Pigment
+            blooms, feathers and backruns into wet paper, and dries to crisp darkened
+            edges &mdash; a fluid model from the watercolour graphics literature, run as
+            WebGL2 shader passes. Paint with a mouse, a finger, or a pressure-sensitive pen.
+          </p>
+          <ul class="tags">
+            <li>WebGL2</li><li>Fluid sim</li><li>PWA</li><li>2026</li>
+          </ul>
+        </div>
+        <div class="links">
+          <a class="live" href="https://miapritchina.github.io/paintwheel/">Open</a>
+          <a href="https://github.com/miapritchina/paintwheel">Source</a>
+        </div>
+      </li>
+
+      <li class="entry reveal" style="--i:4">
+        <div class="num">02</div>
+        <div class="body">
+          <h3 class="title">
+            <a href="https://miapritchina.github.io/chineseapp/">Chinese</a><span class="cjk" aria-hidden="true">中文</span>
+          </h3>
+          <p class="desc">
+            A mobile-first app for learning Chinese characters: search, a decomposition
+            tree linking words to characters to components, animated stroke order, a
+            三字经 reader, and review drills scheduled by spaced repetition.
+          </p>
+          <ul class="tags">
+            <li>React</li><li>TypeScript</li><li>Supabase</li><li>2026</li>
+          </ul>
+        </div>
+        <div class="links">
+          <a class="live" href="https://miapritchina.github.io/chineseapp/">Open</a>
+          <a href="https://github.com/miapritchina/chineseapp">Source</a>
+        </div>
+      </li>
+
+      <li class="entry reveal" style="--i:5">
+        <div class="num">03</div>
+        <div class="body">
+          <h3 class="title">
+            <a href="https://miapritchina.github.io/-/">Guqin Finger Techniques</a><span class="cjk" aria-hidden="true">古琴指法</span>
+          </h3>
+          <p class="desc">
+            A searchable reference for the hand techniques of the guqin as they appear
+            in ji&#462;nz&igrave;p&#468; tablature: each one with its reduced glyph, pinyin,
+            plain instruction, the poetic gesture-image it was taught by, and sources.
+          </p>
+          <ul class="tags">
+            <li>Reference</li><li>JavaScript</li><li>2026</li>
+          </ul>
+        </div>
+        <div class="links">
+          <a class="live" href="https://miapritchina.github.io/-/">Open</a>
+          <a href="https://github.com/miapritchina/-">Source</a>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <section aria-labelledby="archive">
+    <div class="section-head reveal" style="--i:6">
+      <h2 id="archive">Archive</h2>
+      <span class="count">Older, still standing</span>
+    </div>
+
+    <ol class="index index--archive" start="4">
+
+      <li class="entry reveal" style="--i:7">
+        <div class="num">04</div>
+        <div class="body">
+          <h3 class="title">
+            <a href="https://miapritchina.github.io/my-portfolio-HTML/">Portfolio</a>
+          </h3>
+          <p class="desc">An earlier single-page portfolio, hand-built in plain HTML and CSS.</p>
+        </div>
+        <div class="links">
+          <a class="live" href="https://miapritchina.github.io/my-portfolio-HTML/">Open</a>
+          <a href="https://github.com/miapritchina/my-portfolio-HTML">Source</a>
+        </div>
+      </li>
+
+      <li class="entry reveal" style="--i:8">
+        <div class="num">05</div>
+        <div class="body">
+          <h3 class="title">
+            <a href="https://miapritchina.github.io/ABCsite/">ABC</a>
+          </h3>
+          <p class="desc">An alphabet toy: pick any Google font and watch the letterforms change.</p>
+        </div>
+        <div class="links">
+          <a class="live" href="https://miapritchina.github.io/ABCsite/">Open</a>
+          <a href="https://github.com/miapritchina/ABCsite">Source</a>
+        </div>
+      </li>
+
+      <li class="entry reveal" style="--i:9">
+        <div class="num">06</div>
+        <div class="body">
+          <h3 class="title">
+            <a href="https://miapritchina.github.io/random_picker/">Random Picker</a>
+          </h3>
+          <p class="desc">A small CSS-animation study that picks between two options.</p>
+        </div>
+        <div class="links">
+          <a class="live" href="https://miapritchina.github.io/random_picker/">Open</a>
+          <a href="https://github.com/miapritchina/random_picker">Source</a>
+        </div>
+      </li>
+
+    </ol>
+  </section>
+
+  <footer class="reveal" style="--i:10">
+    <span>Vancouver</span>
+    <span><a href="https://github.com/miapritchina">github.com/miapritchina</a></span>
+  </footer>
+
+</div>
+</body>
+</html>
