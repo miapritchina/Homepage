@@ -20,6 +20,14 @@ It will then be live at <https://miapritchina.github.io/Homepage/>.
 To serve it from the bare `miapritchina.github.io` domain instead, rename this
 repository to `miapritchina.github.io`.
 
+## Icons
+
+`icons/icon.svg` is the source mark — the masthead seal, with the Instrument
+Serif `M` converted to an outline so it renders identically without the
+webfont. The PNGs next to it are rasterised from that SVG and listed in
+`manifest.webmanifest`, which is what gives the page a real icon when it is
+installed to a phone home screen rather than a screenshot of the page.
+
 ## Adding a project
 
 Copy an existing `<li class="entry">` block in `index.html`, update the title,
