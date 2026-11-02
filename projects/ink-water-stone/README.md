@@ -44,17 +44,35 @@ to Files*), and use a normal download on desktop.
 | `icons/`, `manifest.webmanifest` | App icon and install metadata |
 | `sw.js` | Service worker for offline use |
 | `build.py` | Regenerates the file list in `sw.js` |
+| `tools/` | Scripts for pulling in a new version of the artifact (not part of the app) |
 
-## Changing files
+## Updating from the artifact
 
-After adding, removing or editing any file, run:
+The guide is still edited as a Claude artifact. To bring a new version in:
 
-```sh
-python3 build.py
-```
+1. Download the artifact's `index.html` and any new or changed files
+   (images, `canvas.json`, `palettes.json`) into this folder's matching paths.
+2. Convert the page:
 
-It rewrites the list of files (with content hashes) in `sw.js`. Installed
-copies then pick up only the files that changed on their next visit.
+   ```sh
+   python3 tools/import_artifact.py path/to/artifact/index.html
+   ```
 
-If you add text with new Chinese characters, re-subset the Noto Serif SC
-fonts in `fonts/` to include them, or they will fall back to a system font.
+   This writes `index.html` with local fonts and JSZip, plain browser
+   downloads, the install/offline wiring and the one-column brush list. It
+   stops with an error if the artifact changed in a way it doesn't expect.
+3. If the new version uses Chinese characters the fonts don't have yet:
+
+   ```sh
+   pip install fonttools brotli
+   python3 tools/subset_fonts.py
+   ```
+
+4. Refresh the offline file list, so installed copies download only what
+   changed:
+
+   ```sh
+   python3 build.py
+   ```
+
+Run `python3 build.py` after any other edit in this folder too.

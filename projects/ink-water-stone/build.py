@@ -16,7 +16,7 @@ CORE_FILES = {'index.html', 'manifest.webmanifest', 'palettes.json', 'canvas.jso
 files = {}
 for f in sorted(ROOT.rglob('*')):
     rel = f.relative_to(ROOT).as_posix()
-    if f.is_file() and rel not in SKIP and not rel.startswith('.'):
+    if f.is_file() and rel not in SKIP and not rel.startswith(('.', 'tools/')):
         files[rel] = hashlib.sha256(f.read_bytes()).hexdigest()[:10]
 core = [p for p in files if p in CORE_FILES or p.startswith(CORE_DIRS)]
 
