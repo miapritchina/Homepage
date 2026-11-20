@@ -218,7 +218,7 @@ function more() {
 function card(r, n) {
   if (r.lo) return `<button class="card lo" data-n="${n}" style="--ar:.75"><span class="seal">link</span><span class="vz">${esc(r.z || r.t)}</span><span class="lbl">${esc(r.a || '')}<br>${esc(r.m)}</span></button>`;
   const ar = r.ar || 0.62;
-  return `<button class="card ${seen.has(r.i) && dimSeen ? 'isseen' : ''}" data-n="${n}" style="--ar:${ar.toFixed(3)}"><img loading="lazy" decoding="async" src="${esc(r.th)}" alt="" onload="this.classList.add('ld');if(!${!!r.ar}){const a=this.naturalWidth/this.naturalHeight;if(a)this.parentNode.style.setProperty('--ar',Math.min(Math.max(a,.25),4).toFixed(3))}" onerror="this.style.display='none';window.__thumbFail&&window.__thumbFail(this.src)">
+  return `<button class="card ${seen.has(r.i) && dimSeen ? 'isseen' : ''}" data-n="${n}" style="--ar:${ar.toFixed(3)}"><img loading="lazy" decoding="async" src="${esc(r.th)}" alt="" onload="this.classList.add('ld');this.parentNode.classList.add('ok');if(!${!!r.ar}){const a=this.naturalWidth/this.naturalHeight;if(a)this.parentNode.style.setProperty('--ar',Math.min(Math.max(a,.25),4).toFixed(3))}" onerror="this.style.display='none';this.parentNode.classList.add('ok','broken');window.__thumbFail&&window.__thumbFail(this.src)">
     ${NOTES[r.i] ? '<span class="pin">notes</span>' : ''}<span class="heart ${favs.has(r.i) ? 'on' : ''}" data-fav="${esc(r.i)}" role="button" aria-label="Favourite">${favs.has(r.i) ? '♥' : '♡'}</span>${seen.has(r.i) ? '<span class="seenmark">✓ seen</span>' : ''}
     <span class="cap"><b>${esc(r.t)}</b><span>${esc(r.a)} · ${esc(r.d)}</span></span></button>`;
 }
@@ -244,10 +244,11 @@ function ensureOSD() {
     gestureSettingsTouch: {pinchRotate: false, flickEnabled: true}, crossOriginPolicy: false, immediateRender: false,
     preserveImageSizeOnResize: true, imageSmoothingEnabled: true,
   });
-  osd.addHandler('open', () => { requestAnimationFrame(() => { osd.forceResize(); osd.viewport.goHome(true); addPins(); }); fadeHint(); });
-  osd.addHandler('open-failed', ev => { const r = VIEW[cur]; ph('image_load_failed', {painting: r?.i, museum: r?.m, url: String(ev?.source?.url || ev?.source || ''), message: ev?.message, where: 'viewer'}); try { window.posthog?.captureException(new Error('Viewer image failed: ' + (r?.m || '') + ' ' + (ev?.message || '')), {painting: r?.i}); } catch {} $('#osd').insertAdjacentHTML('beforeend', '<div class="loading">This image could not be loaded. Try the museum link in the notes.</div>'); });
+  osd.addHandler('open', () => { busy(true); osd.world.getItemAt(0)?.addOnceHandler('fully-loaded-change', () => busy(false)); requestAnimationFrame(() => { osd.forceResize(); osd.viewport.goHome(true); addPins(); }); fadeHint(); });
+  osd.addHandler('open-failed', ev => { busy(false); const r = VIEW[cur]; ph('image_load_failed', {painting: r?.i, museum: r?.m, url: String(ev?.source?.url || ev?.source || ''), message: ev?.message, where: 'viewer'}); try { window.posthog?.captureException(new Error('Viewer image failed: ' + (r?.m || '') + ' ' + (ev?.message || '')), {painting: r?.i}); } catch {} $('#osd').insertAdjacentHTML('beforeend', '<div class="loading">This image could not be loaded. Try the museum link in the notes.</div>'); });
   return osd;
 }
+let busyT; function busy(on) { clearTimeout(busyT); if (on) $('#vload').hidden = false; else busyT = setTimeout(() => $('#vload').hidden = true, 150); }
 function tileSource(im) {
   if (im.t === 'iiif') return im.u + '/info.json';
   if (im.t === 'dzi') return im.u;
@@ -270,7 +271,7 @@ function openViewer(n, img = 0) {
     $('#nolink').innerHTML = `<div><div class="big">${esc(r.z || r.t)}</div><p>${esc(r.m)} doesn't allow copies of its images, so this painting is shown here as a link only.</p>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">Read about it →</a>` : ''}</div>`;
   } else {
     $('#osd').style.display = ''; $('#nolink').hidden = true;
-    ensureOSD().open(tileSource(r.im[img]));
+    busy(true); ensureOSD().open(tileSource(r.im[img]));
     strip(r);
   }
   panel(r);
@@ -279,7 +280,7 @@ function openViewer(n, img = 0) {
 function strip(r) {
   if (r.im.length < 2) { $('#strip').innerHTML = ''; return; }
   $('#strip').innerHTML = `<span class="lbl">${curImg + 1} / ${r.im.length}</span>` + r.im.map((im, k) =>
-    `<button class="${k === curImg ? 'on' : ''}" data-k="${k}" aria-label="Image ${k + 1}" style="background-image:url('${esc(thumbOf(im, r))}')"></button>`).join('');
+    `<button class="${k === curImg ? 'on' : ''}" data-k="${k}" aria-label="Image ${k + 1}"><img src="${esc(thumbOf(im, r))}" alt="" loading="lazy" onload="this.parentNode.classList.add('ld')" onerror="this.parentNode.classList.add('ld','err')"></button>`).join('');
 }
 function thumbOf(im, r) {
   if (im.t === 'iiif') return im.u + '/full/!120,120/0/default.jpg';
@@ -288,8 +289,8 @@ function thumbOf(im, r) {
   if (/clevelandart/.test(im.u)) return im.u.replace('_print.jpg', '_web.jpg');
   return r.th;
 }
-$('#strip').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { curImg = +b.dataset.k; pinOn = -1; osd.open(tileSource(VIEW[cur].im[curImg])); strip(VIEW[cur]); panel(VIEW[cur]); } });
-function closeViewer() { const n = cur; $('#viewer').hidden = true; document.body.style.overflow = ''; cur = -1; writeHash(); refreshCard(n); renderFacets(); }
+$('#strip').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { curImg = +b.dataset.k; pinOn = -1; busy(true); osd.open(tileSource(VIEW[cur].im[curImg])); strip(VIEW[cur]); panel(VIEW[cur]); } });
+function closeViewer() { busy(false); const n = cur; $('#viewer').hidden = true; document.body.style.overflow = ''; cur = -1; writeHash(); refreshCard(n); renderFacets(); }
 $('#vclose').onclick = closeViewer;
 $('#vprev').onclick = () => cur > 0 && openViewer(cur - 1);
 $('#vnext').onclick = () => { if (cur < VIEW.length - 1) { if (cur + 1 >= shown) more(); openViewer(cur + 1); } };
