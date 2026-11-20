@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Ink &amp; Silk — Chinese Paintings to 1912</title>
+<meta name="description" content="A personal collection of historical Chinese paintings with deep zoom, from open-access museum collections." />
+<meta name="theme-color" content="#f2ede2" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet" />
+<link rel="icon" href="icon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="top">
+  <a class="home" href="https://miapritchina.github.io/Homepage/" aria-label="All projects">←</a>
+  <div class="brand">
+    <h1>Ink &amp; Silk <span class="zh">水墨丹青</span></h1>
+    <p class="sub" id="sub">Chinese painting to 1912</p>
+  </div>
+  <label class="search">
+    <span class="sr">Search</span>
+    <input id="q" type="search" placeholder="Search title, painter, 中文…" autocomplete="off" />
+  </label>
+  <div class="tools">
+    <select id="sort" aria-label="Sort">
+      <option value="chron">Oldest first</option>
+      <option value="chronr">Newest first</option>
+      <option value="artist">Painter A–Z</option>
+      <option value="mp">Highest resolution</option>
+      <option value="shuffle">Shuffle</option>
+    </select>
+    <button id="toggleFilters" class="btn" aria-expanded="true">Filters</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside id="filters" class="filters" aria-label="Filters">
+    <div class="fhead">
+      <span id="count" class="count"></span>
+      <button id="clear" class="link">Clear all</button>
+    </div>
+    <div id="active" class="active"></div>
+    <div id="facets"></div>
+    <section class="about">
+      <h3>About this collection</h3>
+      <p>Paintings come from museums that publish open-access images: the Met, Cleveland, the Art Institute of Chicago, the Smithsonian's Freer Gallery, and, through Wikimedia Commons, Taipei's National Palace Museum, Princeton, Yale, Minneapolis, Indianapolis and others. Images are shown from the museums' own servers where they offer zoom, or as tiles cut from the open-access files.</p>
+      <p>Museums that allow no copies, such as the Palace Museum in Beijing and the Shanghai Museum, appear as link-only cards.</p>
+      <p>Schools, approach and subject tags are assigned automatically from titles, media and painter. Painter notes are short summaries. Treat both as a guide, not a catalogue.</p>
+    </section>
+  </aside>
+  <main id="main">
+    <div id="intro" class="intro" hidden></div>
+    <div id="grid" class="grid" aria-live="polite"></div>
+    <div id="more" class="more"></div>
+  </main>
+</div>
+
+<div id="viewer" class="viewer" hidden>
+  <div class="vbar">
+    <button id="vclose" class="vbtn" aria-label="Close">✕</button>
+    <div class="vtitle"><span id="vt"></span><span id="vz" class="zh"></span></div>
+    <div class="vctl">
+      <button id="vprev" class="vbtn" aria-label="Previous painting">‹</button>
+      <button id="vnext" class="vbtn" aria-label="Next painting">›</button>
+      <button id="vfav" class="vbtn" aria-label="Save to favourites">♡</button>
+      <button id="vinfo" class="vbtn on" aria-label="Show notes">Notes</button>
+    </div>
+  </div>
+  <div class="vbody">
+    <div id="osd" class="osd"></div>
+    <div id="nolink" class="nolink" hidden></div>
+    <div id="strip" class="strip"></div>
+    <div id="zoomhint" class="zoomhint">Pinch or double-tap to zoom</div>
+    <aside id="panel" class="panel"></aside>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/openseadragon@4.1.1/build/openseadragon/openseadragon.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
