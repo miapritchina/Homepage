@@ -6,8 +6,8 @@ tiled = {}
 for _f in ('tiled.json', 'tiled2.json'):
     if os.path.exists(_f): tiled.update(json.load(open(_f)))
 # only use tiles whose DZI exists and has been normalised
-tiled = {k: v for k, v in tiled.items() if os.path.exists(f'/home/claude/homepage/chinese-paintings/tiles/{k}_files/.fixed')}
-OUT = '/home/claude/homepage/chinese-paintings/data'
+tiled = {k: v for k, v in tiled.items() if os.path.exists(f'/home/claude/homepage/projects/chinese-paintings/tiles/{k}_files/.fixed')}
+OUT = '/home/claude/homepage/projects/chinese-paintings/data'
 os.makedirs(OUT, exist_ok=True)
 STEPS = [500, 960, 1280, 1920, 3840]
 
@@ -24,17 +24,27 @@ for r in d:
     for n, im in enumerate(r['images']):
         key = f"{r['id']}_{n}"
         if key in tiled:
-            w, h = tiled[key]; ims.append({'t': 'dzi', 'u': f'tiles/{key}.dzi'})
+            w, h = tiled[key]; ims.append({'t': 'dzi', 'u': f'tiles/{key}.dzi', 'q': round(w * h / 1e6, 1)})
             if n == 0: mp = round(w * h / 1e6, 1)
         elif im['t'] == 'big' or (r['src'] == 'Commons' and im.get('w') and im['w'] * im['h'] > 45e6):
             # too large (or TIFF) for a browser: ask Wikimedia for a scaled JPEG of ~45 MP
             w, h = im['w'], im['h']
             tw = int(min(w - 1, w * math.sqrt(min(1, 45e6 / (w * h)))))
-            ims.append({'t': 'img', 'u': cthumb(im['u'], tw)})
+            ims.append({'t': 'img', 'u': cthumb(im['u'], tw), 'q': round(tw * (h * tw / w) / 1e6, 1)})
             if n == 0: mp = round(tw * (h * tw / w) / 1e6, 1)
         else:
             x = {'t': im['t'], 'u': strip_q(im['u'])}
+            if im.get('w') and im.get('h'): x['q'] = round(im['w'] * im['h'] / 1e6, 1)
+            elif r['src'] == 'Met' and n == 0 and r.get('px'): x['q'] = round(r['px'][0] * r['px'][1] / 1e6, 1)
+            if r['src'] == 'AIC': x['q'] = 6.0   # AIC IIIF serves up to ~3000 px
             ims.append(x)
+    # gallery reel: largest image first (pixel area where the museum gives sizes; unknown sizes keep their order at the end)
+    # sort by the resolution actually served (ties keep the museum's order, so the main view stays first)
+    sizes = [round(im.get('q') or 0) for im in ims]
+    if len(ims) > 1 and any(sizes):
+        order = sorted(range(len(ims)), key=lambda k: (-sizes[k], k))
+        ims = [ims[k] for k in order]
+        mp = ims[0].get('q') or mp
     th = r['thumb']
     if r['src'] == 'Commons': th = cthumb(r['images'][0]['u'], 500)
     ar = None
