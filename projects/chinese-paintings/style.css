@@ -281,3 +281,10 @@ body.filtering .filters{padding-bottom:110px}
   .strip button .th{width:46px;height:46px}
   .strip{align-items:flex-start}
 }
+
+.quick{display:flex;gap:8px;margin:0 0 12px;flex-wrap:wrap}
+.quick button{height:40px;border:1px solid var(--rule);background:#fffaf0;border-radius:20px;padding:0 14px;font:13px var(--mono);cursor:pointer;color:var(--ink)}
+.quick button span{color:var(--muted);margin-left:4px;font-size:11px}
+.quick button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.quick button.on span{color:var(--paper2)}
+@media (max-width:600px){.quick{margin-bottom:8px}.quick button{height:36px;font-size:12px}}

@@ -20,7 +20,7 @@ const seen = new Set(store.get('seen', []));
 let showDots = store.get('dots', true);
 let autoSeen = store.get('autoSeen', true), dimSeen = store.get('dimSeen', true);
 const ph = (name, props) => { try { window.posthog && window.posthog.capture(name, props); } catch {} };
-function saveMarks() { store.set('favs', [...favs]); store.set('seen', [...seen]); updateTally(); }
+function saveMarks() { store.set('favs', [...favs]); store.set('seen', [...seen]); updateTally(); if (ALL.length) renderQuick(); }
 function updateTally() {
   const n = ALL.filter(r => !r.lo).length, s = ALL.filter(r => !r.lo && seen.has(r.i)).length;
   $('#tally').innerHTML = `<span>♥ ${favs.size}</span><span>✓ ${s.toLocaleString()} / ${n.toLocaleString()} seen</span>`;
@@ -92,7 +92,7 @@ function update(keepScroll) {
   VIEW.sort(by);
   $('#count').textContent = `${VIEW.length.toLocaleString()} paintings`;
   $('#showResults').textContent = `Show ${VIEW.length.toLocaleString()} paintings`;
-  renderFacets(); renderActive(); renderIntro();
+  renderFacets(); renderActive(); renderIntro(); renderQuick();
   shown = 0; $('#grid').innerHTML = '';
   if (!VIEW.length) $('#grid').innerHTML = '<div class="empty">Nothing matches. Try removing a filter.</div>';
   more();
@@ -101,6 +101,13 @@ function update(keepScroll) {
 }
 function hash(s) { let h = Math.floor(seed * 1e9); for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return h; }
 
+function renderQuick() {
+  const sel = F.mine || new Set();
+  const base = ALL.filter(r => !r.lo && passes(r, 'mine'));
+  const n = {'♥ Favourites': base.filter(r => favs.has(r.i)).length, '○ Not seen yet': base.filter(r => !seen.has(r.i)).length};
+  document.querySelectorAll('#quick button').forEach(b => { b.classList.toggle('on', sel.has(b.dataset.q)); b.querySelector('span').textContent = n[b.dataset.q].toLocaleString(); });
+}
+$('#quick').addEventListener('click', e => { const b = e.target.closest('button'); if (b) toggle('mine', b.dataset.q); });
 function renderIntro() {
   const any = q || yr[0] > 300 || yr[1] < 1912 || Object.values(F).some(s => s.size);
   const el = $('#intro'); el.hidden = !!any; if (any) return;
