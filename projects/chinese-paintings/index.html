@@ -95,6 +95,7 @@ addEventListener('appinstalled', function () { posthog.capture('app_installed');
     <div id="intro" class="intro" hidden></div>
     <div id="grid" class="grid" aria-live="polite"></div>
     <div id="more" class="more"></div>
+    <button id="showResults" class="showres" hidden>Show paintings</button>
   </main>
 </div>
 
@@ -105,6 +106,7 @@ addEventListener('appinstalled', function () { posthog.capture('app_installed');
     <div class="vctl">
       <button id="vprev" class="vbtn" aria-label="Previous painting">‹</button>
       <button id="vnext" class="vbtn" aria-label="Next painting">›</button>
+      <button id="vdots" class="vbtn on" aria-label="Show or hide the numbered dots">Dots</button>
       <button id="vseen" class="vbtn">Mark seen</button>
       <button id="vfav" class="vbtn" aria-label="Save to favourites">♡</button>
       <button id="vinfo" class="vbtn on" aria-label="Show notes">Notes</button>

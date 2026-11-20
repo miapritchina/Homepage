@@ -17,6 +17,7 @@ let ALL = [], NOTES = {}, ARTISTS = {}, VIEW = [], shown = 0;
 const PAGE = 90;
 const favs = new Set(store.get('favs', []));
 const seen = new Set(store.get('seen', []));
+let showDots = store.get('dots', true);
 let autoSeen = store.get('autoSeen', true), dimSeen = store.get('dimSeen', true);
 const ph = (name, props) => { try { window.posthog && window.posthog.capture(name, props); } catch {} };
 function saveMarks() { store.set('favs', [...favs]); store.set('seen', [...seen]); updateTally(); }
@@ -90,6 +91,7 @@ function update(keepScroll) {
   }[sort];
   VIEW.sort(by);
   $('#count').textContent = `${VIEW.length.toLocaleString()} paintings`;
+  $('#showResults').textContent = `Show ${VIEW.length.toLocaleString()} paintings`;
   renderFacets(); renderActive(); renderIntro();
   shown = 0; $('#grid').innerHTML = '';
   if (!VIEW.length) $('#grid').innerHTML = '<div class="empty">Nothing matches. Try removing a filter.</div>';
@@ -200,7 +202,10 @@ $('#sort').onchange = e => { sort = e.target.value; store.set('sort', sort); if 
 function toggleFilters(force) {
   const on = force ?? $('.layout').classList.contains('nofilters');
   $('.layout').classList.toggle('nofilters', !on); $('#toggleFilters').setAttribute('aria-expanded', on);
+  $('#showResults').hidden = !(on && innerWidth <= 820);
+  document.body.classList.toggle('filtering', on && innerWidth <= 820);
 }
+$('#showResults').onclick = () => { toggleFilters(false); scrollTo({top: 0}); };
 $('#toggleFilters').onclick = () => toggleFilters();
 
 /* ---------- grid ---------- */
@@ -234,7 +239,7 @@ function ensureOSD() {
   if (osd) return osd;
   osd = OpenSeadragon({
     element: $('#osd'), prefixUrl: 'https://cdn.jsdelivr.net/npm/openseadragon@4.1.1/build/openseadragon/images/',
-    showNavigationControl: false, showNavigator: true, navigatorPosition: 'TOP_RIGHT', navigatorSizeRatio: 0.14, navigatorAutoFade: true,
+    showNavigationControl: false, showNavigator: innerWidth > 700, navigatorPosition: 'TOP_RIGHT', navigatorSizeRatio: 0.14, navigatorAutoFade: true,
     maxZoomPixelRatio: 3, visibilityRatio: 0.5, constrainDuringPan: false, animationTime: 0.9, springStiffness: 8,
     gestureSettingsTouch: {pinchRotate: false, flickEnabled: true}, crossOriginPolicy: false, immediateRender: false,
     preserveImageSizeOnResize: true, imageSmoothingEnabled: true,
@@ -255,6 +260,7 @@ function openViewer(n, img = 0) {
   $('#vfav').classList.toggle('faved', favs.has(r.i)); $('#vfav').textContent = favs.has(r.i) ? '♥' : '♡';
   if (!r.lo && autoSeen) toggleSeen(r.i, true);
   markSeenBtn(r);
+  $('#vdots').hidden = !NOTES[r.i];
   ph('painting_opened', {painting: r.i, title: r.t, artist: r.a, museum: r.m, source: r.lo ? 'link-only' : (r.im?.[0]?.t || ''), dynasty: r.d, has_notes: !!NOTES[r.i]});
   pinOn = -1;
   document.querySelectorAll('#osd .loading').forEach(e => e.remove());
@@ -287,7 +293,10 @@ function closeViewer() { const n = cur; $('#viewer').hidden = true; document.bod
 $('#vclose').onclick = closeViewer;
 $('#vprev').onclick = () => cur > 0 && openViewer(cur - 1);
 $('#vnext').onclick = () => { if (cur < VIEW.length - 1) { if (cur + 1 >= shown) more(); openViewer(cur + 1); } };
-$('#vinfo').onclick = () => { $('#panel').classList.toggle('hide'); $('#vinfo').classList.toggle('on'); };
+function applyDots() { $('#viewer').classList.toggle('nodots', !showDots); $('#vdots').classList.toggle('on', showDots); }
+$('#vdots').onclick = () => { showDots = !showDots; store.set('dots', showDots); applyDots(); ph('dots_toggled', {on: showDots}); };
+applyDots();
+$('#vinfo').onclick = () => { const hide = $('#panel').classList.toggle('hide'); $('#vinfo').classList.toggle('on', !hide); $('#viewer').classList.toggle('nopanel', hide); };
 $('#vfav').onclick = () => {
   const r = VIEW[cur]; const on = toggleFav(r.i);
   $('#vfav').classList.toggle('faved', on); $('#vfav').textContent = on ? '♥' : '♡'; refreshCard(cur);
