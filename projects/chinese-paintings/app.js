@@ -213,6 +213,10 @@ function more() {
   const g = $('#grid'); const end = Math.min(VIEW.length, shown + PAGE); let h = '';
   for (let n = shown; n < end; n++) h += card(VIEW[n], n);
   g.insertAdjacentHTML('beforeend', h); shown = end;
+  clearTimeout(more.t); more.t = setTimeout(() => {
+    const go = () => g.querySelectorAll('img[loading=lazy]').forEach(i => i.loading = 'eager');
+    'requestIdleCallback' in window ? requestIdleCallback(go, {timeout: 3000}) : go();
+  }, 1500);
   $('#more').textContent = shown < VIEW.length ? 'Loading more…' : (VIEW.length ? '— end —' : '');
 }
 function card(r, n) {
@@ -244,7 +248,11 @@ function ensureOSD() {
     gestureSettingsTouch: {pinchRotate: false, flickEnabled: true}, crossOriginPolicy: false, immediateRender: false,
     preserveImageSizeOnResize: true, imageSmoothingEnabled: true,
   });
-  osd.addHandler('open', () => { busy(true); osd.world.getItemAt(0)?.addOnceHandler('fully-loaded-change', () => busy(false)); requestAnimationFrame(() => { osd.forceResize(); osd.viewport.goHome(true); addPins(); }); fadeHint(); });
+  osd.addHandler('open', () => { busy(true);
+    const r0 = VIEW[cur], it = osd.world.getItemAt(0);
+    if (r0 && it) { const d = it.source.dimensions; if (d && d.x > 1 && r0.im[curImg]) setQ(r0, curImg, d.x * d.y / 1e6); }
+    it?.addOnceHandler('fully-loaded-change', () => { busy(false); if (VIEW[cur]) preloadReel(VIEW[cur]); });
+    setTimeout(() => VIEW[cur] && preloadReel(VIEW[cur]), 6000); requestAnimationFrame(() => { osd.forceResize(); osd.viewport.goHome(true); addPins(); }); fadeHint(); });
   osd.addHandler('open-failed', ev => { busy(false); const r = VIEW[cur]; ph('image_load_failed', {painting: r?.i, museum: r?.m, url: String(ev?.source?.url || ev?.source || ''), message: ev?.message, where: 'viewer'}); try { window.posthog?.captureException(new Error('Viewer image failed: ' + (r?.m || '') + ' ' + (ev?.message || '')), {painting: r?.i}); } catch {} $('#osd').insertAdjacentHTML('beforeend', '<div class="loading">This image could not be loaded. Try the museum link in the notes.</div>'); });
   return osd;
 }
@@ -256,7 +264,7 @@ function tileSource(im) {
 }
 function openViewer(n, img = 0) {
   cur = n; curImg = img; const r = VIEW[n]; if (!r) return;
-  $('#viewer').hidden = false; document.body.style.overflow = 'hidden';
+  $('#viewer').hidden = false; document.body.style.overflow = 'hidden'; setTheme(true); if (isPhone()) setSheet(document.querySelector('#viewer').classList.contains('nopanel') ? 'closed' : 'peek');
   $('#vt').textContent = r.t; $('#vz').textContent = r.z || '';
   $('#vfav').classList.toggle('faved', favs.has(r.i)); $('#vfav').textContent = favs.has(r.i) ? '♥' : '♡';
   if (!r.lo && autoSeen) toggleSeen(r.i, true);
@@ -266,7 +274,7 @@ function openViewer(n, img = 0) {
   pinOn = -1;
   document.querySelectorAll('#osd .loading').forEach(e => e.remove());
   if (r.lo) {
-    $('#osd').style.display = 'none'; $('#nolink').hidden = false; $('#strip').innerHTML = '';
+    $('#osd').style.display = 'none'; $('#nolink').hidden = false; $('#strip').innerHTML = ''; $('#viewer').classList.remove('hasstrip');
     const href = r.l;
     $('#nolink').innerHTML = `<div><div class="big">${esc(r.z || r.t)}</div><p>${esc(r.m)} doesn't allow copies of its images, so this painting is shown here as a link only.</p>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">Read about it →</a>` : ''}</div>`;
   } else {
@@ -278,9 +286,33 @@ function openViewer(n, img = 0) {
   writeHash();
 }
 function strip(r) {
+  $('#viewer').classList.toggle('hasstrip', r.im.length > 1);
   if (r.im.length < 2) { $('#strip').innerHTML = ''; return; }
   $('#strip').innerHTML = `<span class="lbl">${curImg + 1} / ${r.im.length}</span>` + r.im.map((im, k) =>
-    `<button class="${k === curImg ? 'on' : ''}" data-k="${k}" aria-label="Image ${k + 1}"><img src="${esc(thumbOf(im, r))}" alt="" loading="lazy" onload="this.parentNode.classList.add('ld')" onerror="this.parentNode.classList.add('ld','err')"></button>`).join('');
+    `<button class="${k === curImg ? 'on' : ''}" data-k="${k}" aria-label="Image ${k + 1}"><span class="th"><img src="${esc(thumbOf(im, r))}" alt="" onload="this.closest('button').classList.add('ld')" onerror="this.closest('button').classList.add('ld','err')"></span><small class="q q-${qClass(im.q)}" data-qk="${k}">${qLabel(im.q)}</small></button>`).join('');
+}
+function qClass(mp) { return mp == null ? 'u' : mp >= 40 ? 'ultra' : mp >= 12 ? 'high' : mp >= 4 ? 'good' : 'low'; }
+function qLabel(mp) { return {u: '…', ultra: 'Ultra', high: 'High', good: 'Good', low: 'Low'}[qClass(mp)]; }
+function setQ(r, k, mp) {
+  r.im[k].q = Math.round(mp * 10) / 10;
+  const el = document.querySelector(`#strip [data-qk="${k}"]`);
+  if (el && VIEW[cur] === r) { el.className = 'q q-' + qClass(mp); el.textContent = qLabel(mp); }
+}
+/* after the first image is in, quietly fetch the painting's other versions so switching is instant
+   and each thumbnail can show how detailed that version really is */
+let preloadFor = null;
+function preloadReel(r) {
+  if (preloadFor === r.i) return; preloadFor = r.i;
+  r.im.forEach((im, k) => {
+    if (k === curImg) return;
+    if (im.t === 'img' && (im.q == null || im.q <= 30)) {
+      const x = new Image(); x.decoding = 'async';
+      x.onload = () => { if (x.naturalWidth) setQ(r, k, x.naturalWidth * x.naturalHeight / 1e6); };
+      x.src = im.u;
+    } else if (im.t === 'iiif' && im.q == null) {
+      fetch(im.u + '/info.json').then(res => res.json()).then(j => setQ(r, k, j.width * j.height / 1e6)).catch(() => {});
+    }
+  });
 }
 function thumbOf(im, r) {
   if (im.t === 'iiif') return im.u + '/full/!120,120/0/default.jpg';
@@ -290,14 +322,51 @@ function thumbOf(im, r) {
   return r.th;
 }
 $('#strip').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { curImg = +b.dataset.k; pinOn = -1; busy(true); osd.open(tileSource(VIEW[cur].im[curImg])); strip(VIEW[cur]); panel(VIEW[cur]); } });
-function closeViewer() { busy(false); const n = cur; $('#viewer').hidden = true; document.body.style.overflow = ''; cur = -1; writeHash(); refreshCard(n); renderFacets(); }
+function closeViewer() { busy(false); setTheme(false); const n = cur; $('#viewer').hidden = true; document.body.style.overflow = ''; cur = -1; writeHash(); refreshCard(n); renderFacets(); }
 $('#vclose').onclick = closeViewer;
 $('#vprev').onclick = () => cur > 0 && openViewer(cur - 1);
 $('#vnext').onclick = () => { if (cur < VIEW.length - 1) { if (cur + 1 >= shown) more(); openViewer(cur + 1); } };
 function applyDots() { $('#viewer').classList.toggle('nodots', !showDots); $('#vdots').classList.toggle('on', showDots); }
 $('#vdots').onclick = () => { showDots = !showDots; store.set('dots', showDots); applyDots(); ph('dots_toggled', {on: showDots}); };
 applyDots();
-$('#vinfo').onclick = () => { const hide = $('#panel').classList.toggle('hide'); $('#vinfo').classList.toggle('on', !hide); $('#viewer').classList.toggle('nopanel', hide); };
+$('#vinfo').onclick = () => {
+  if (isPhone()) { const closed = !$('#viewer').classList.contains('nopanel'); setSheet(closed ? 'closed' : 'peek'); return; }
+  const hide = $('#panel').classList.toggle('hide'); $('#vinfo').classList.toggle('on', !hide); $('#viewer').classList.toggle('nopanel', hide);
+};
+/* phone: notes as a bottom sheet (closed / peek / half / full) */
+const isPhone = () => innerWidth <= 820;
+const SHEETS = ['peek', 'half', 'full'];
+function setSheet(s) {
+  const v = $('#viewer'); v.dataset.sheet = s; v.classList.toggle('nopanel', s === 'closed'); $('#vinfo').classList.toggle('on', s !== 'closed');
+  $('#panel').style.transform = '';
+  setTimeout(() => { if (osd) { osd.forceResize(); if (pinOn < 0) osd.viewport.goHome(true); } }, 320);
+}
+function setTheme(dark) {
+  const c = dark ? '#121110' : '#f2ede2';
+  document.querySelectorAll('meta[name=theme-color]').forEach(m => m.content = c);
+  document.documentElement.style.background = dark ? '#121110' : '';
+}
+{
+  let y0 = null, t0 = 0, base = 0, moved = false;
+  const p = $('#panel');
+  p.addEventListener('pointerdown', e => {
+    if (!isPhone() || !e.target.closest('.grab')) return;
+    y0 = e.clientY; t0 = Date.now(); moved = false; base = p.getBoundingClientRect().top - p.parentNode.getBoundingClientRect().top;
+    p.setPointerCapture(e.pointerId); p.classList.add('drag');
+  });
+  p.addEventListener('pointermove', e => {
+    if (y0 === null) return; const dy = e.clientY - y0; if (Math.abs(dy) > 4) moved = true;
+    p.style.transform = `translateY(${Math.max(0, base + dy)}px)`;
+  });
+  const end = e => {
+    if (y0 === null) return; p.classList.remove('drag');
+    const dy = e.clientY - y0, cur = $('#viewer').dataset.sheet || 'peek'; y0 = null;
+    if (!moved) { setSheet(SHEETS[(SHEETS.indexOf(cur) + 1) % 3]); return; }
+    const H = p.parentNode.clientHeight, top = base + dy, frac = top / H;
+    setSheet(frac > 0.8 ? (dy > 60 && cur === 'peek' ? 'closed' : 'peek') : frac > 0.3 ? 'half' : 'full');
+  };
+  p.addEventListener('pointerup', end); p.addEventListener('pointercancel', end);
+}
 $('#vfav').onclick = () => {
   const r = VIEW[cur]; const on = toggleFav(r.i);
   $('#vfav').classList.toggle('faved', on); $('#vfav').textContent = on ? '♥' : '♡'; refreshCard(cur);
@@ -327,6 +396,7 @@ function addPins() {
   });
 }
 function goPin(k) {
+  if (isPhone() && ['half', 'full'].includes($('#viewer').dataset.sheet)) setSheet('peek');
   const r = VIEW[cur]; const p = pinsFor(r)[k]; if (!p) return;
   ph('pin_opened', {painting: r.i, pin: k + 1, title: p.title});
   if (pinOn === k) { pinOn = -1; osd.viewport.goHome(); } else {
@@ -370,7 +440,7 @@ function panel(r) {
     ${r.s ? `<button data-k="school" data-v="${esc(r.s)}">${esc(r.s)}</button>` : ''}
     ${(r.tg || []).slice(0, 6).map(t => `<button data-k="tags" data-v="${esc(t)}">${esc(t)}</button>`).join('')}
     <button data-k="dyn" data-v="${esc(r.d)}">${esc(r.d)}</button></div>`;
-  $('#panel').innerHTML = h; $('#panel').scrollTop = 0;
+  $('#panel').innerHTML = `<div class="grab" aria-label="Drag notes up or down"><span></span></div>` + h; $('#panel').scrollTop = 0;
 }
 $('#panel').addEventListener('click', e => {
   const li = e.target.closest('.pins li'); if (li) return goPin(+li.dataset.k);
