@@ -80,7 +80,7 @@ function update(keepScroll) {
   }[sort];
   VIEW.sort(by);
   $('#count').textContent = `${VIEW.length.toLocaleString()} paintings`;
-  renderFacets(); renderActive();
+  renderFacets(); renderActive(); renderIntro();
   shown = 0; $('#grid').innerHTML = '';
   if (!VIEW.length) $('#grid').innerHTML = '<div class="empty">Nothing matches. Try removing a filter.</div>';
   more();
@@ -88,6 +88,18 @@ function update(keepScroll) {
   writeHash();
 }
 function hash(s) { let h = Math.floor(seed * 1e9); for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return h; }
+
+function renderIntro() {
+  const any = q || yr[0] > 300 || yr[1] < 1912 || Object.values(F).some(s => s.size);
+  const el = $('#intro'); el.hidden = !!any; if (any) return;
+  el.innerHTML = `<p><b>${ALL.filter(r => !r.lo).length.toLocaleString()} paintings</b> from open-access museums, oldest first. Tap any painting to zoom into the brushwork. ${Object.keys(NOTES).length} masterpieces have numbered notes pinned to details.</p>
+    <button data-go="notes">Start with the guided ${Object.keys(NOTES).length}</button><button class="alt" data-go="shuffle">Surprise me</button>`;
+}
+$('#intro').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.go === 'notes') { F.notes = new Set(['With pinned notes']); update(); }
+  else { sort = 'shuffle'; seed = Math.random(); $('#sort').value = 'shuffle'; update(); }
+});
 
 /* ---------- sidebar ---------- */
 function counts(f) {

@@ -26,8 +26,8 @@ n('cma135432', 'The Tiger, pair to the Dragon. A crouching tiger in wind-blown b
  (.40,.60,.50,.14,'Wind in the grass','Grasses sweep across the tiger, painted after the body. This is the "wind follows the tiger" half of the pair.'),
 ])
 n('cma149183', 'A round fan painting of a gibbon swinging from an oak, in the manner of the Southern Song Academy. Gibbons were loved for their cries and seen as creatures of untouched wilderness.', [
- (.27,.26,.19,.39,'Gibbon in wet ink','The body is painted with soft, graded washes and no outline, so it looks furry and light.'),
- (.36,.42,.05,.07,'Pale face','The face is left almost blank inside a dark ring, the classic way to paint a gibbon.'),
+ (.26,.30,.16,.32,'Gibbon in wet ink','The body is painted with soft, graded washes and no outline, so it looks furry and light.'),
+ (.355,.42,.05,.06,'Pale face','The face is left almost blank inside a dark ring, the classic way to paint a gibbon.'),
  (.62,.17,.14,.63,'Bark and moss','The trunk is drawn with angular strokes and dotted with dark "moss dots" (苔點).'),
  (.32,.16,.25,.17,'Outlined leaves','The oak leaves are outlined and then filled, a more careful technique than the gibbon.'),
  (.50,.62,.24,.23,'Grasses','Long, springy strokes for the grasses and reeds at the base.'),
@@ -37,7 +37,7 @@ n('cma160136', 'A dense, crowded Yuan landscape by Wang Meng, one of the Four Yu
  (.60,.59,.06,.07,'The scholar at his desk','The tiny seated figure in the pavilion is the subject of the title, writing books under the pines.'),
  (.43,.03,.29,.33,'Pines','Pine needles are drawn as small radiating fans of strokes, layered dark over light.'),
  (.01,.09,.38,.34,'Restless texture','Wang Meng covers his mountains with twisting "ox-hair" strokes and heavy black moss dots, giving them a living, writhing surface.'),
- (.84,.03,.06,.26,'Poem','An inscribed poem at upper right, written into the painting as part of the design.'),
+ (.75,.02,.07,.27,'Poem','An inscribed poem at upper right, written into the painting as part of the design.'),
  (.02,.33,.07,.09,'Signature','The artist signs with his studio name, Huanghe Shanqiao 黃鶴山樵, "the woodcutter of Yellow Crane Mountain".'),
  (.79,.83,.18,.09,'Footbridge','A little bridge leads into the scene, inviting the viewer to walk in.'),
 ])
@@ -53,7 +53,7 @@ n('cma136759', 'A crowd of children playing in a garden courtyard: games, masks,
  (.50,.45,.08,.07,'Parasols','Some carry little parasols, part of a mock procession.'),
  (.32,.48,.06,.09,'"Officials" at play','A child in a green robe and hat plays a dignitary, a favourite joke in these scenes.'),
  (.20,.23,.50,.05,'Ruled balustrade','The garden railings are drawn with a ruler-guided line, a technique called jiehua (界畫).'),
- (.78,.10,.17,.32,'Willow and garden rock','A drooping willow frames the corner; the fan shape is filled to its edge.'),
+ (.70,.10,.17,.45,'Willow and garden rock','A drooping willow frames the corner; the fan shape is filled to its edge.'),
 ])
 n('cma144998', 'An album leaf by Gong Xian, leader of the Eight Masters of Nanjing. A watery village in summer, built almost entirely from rows of ink dabs. It is a good place to study how dots alone can make a landscape.', [
  (.14,.18,.83,.08,'Reeds as rows of dabs','Distant reeds are short vertical marks repeated in rows, each row a little lighter than the one in front.'),
@@ -64,7 +64,7 @@ n('cma144998', 'An album leaf by Gong Xian, leader of the Eight Masters of Nanji
  (.05,.59,.04,.05,'Artist\'s seal','A small red seal at left.'),
 ])
 n('cma140154', 'Two birds sit on a twisting pine above a rushing cataract. Painted on silk in the Southern Song Academy manner associated with Li Di.', [
- (.66,.36,.09,.13,'The pair of birds','Two birds side by side, painted with fine outlines and pale colour.'),
+ (.64,.32,.08,.08,'The pair of birds','Two birds side by side, painted with fine outlines and pale colour.'),
  (.13,.21,.39,.34,'Pine needles','Dark clusters of needles, layered over lighter ones.'),
  (.46,.61,.47,.20,'Spray and foam','White foam is left as bare silk between quick grey strokes.'),
  (.13,.58,.28,.20,'Bamboo','Bamboo leaves under the pine in sharper, darker strokes.'),
@@ -89,9 +89,9 @@ n('cma140267', 'A pair of peafowl under bamboo, by Lin Liang, a Ming court paint
 ])
 n('cma147906', 'Plum blossoms under a full moon, by Wang Mian, the Yuan painter who made ink plum a serious subject. The old trunk and fresh shoots stand for endurance and renewal.', [
  (.11,.21,.17,.10,'The moon','A pale circle washed in lightly, almost invisible.'),
- (.21,.12,.31,.18,'Blossoms in outline','Each flower is drawn as a small ink circle with dots for stamens.'),
+ (.33,.10,.33,.22,'Blossoms in outline','Each flower is drawn as a small ink circle with dots for stamens.'),
  (.35,.72,.63,.26,'Old trunk','Thick, dry strokes with streaks of bare silk, called "flying white" (飛白).'),
- (.02,.56,.19,.10,'Inscription','A poem signed 王元章 (Wang Yuanzhang, Wang Mian\'s courtesy name).'),
+ (.04,.50,.15,.13,'Inscription','A poem signed 王元章 (Wang Yuanzhang, Wang Mian\'s courtesy name).'),
  (.76,.65,.22,.15,'New shoots','Long, straight young branches, painted in one movement each.'),
 ])
 n('cma113945', 'A handscroll by Mi Youren, son of Mi Fu. Misty hills float in bands of cloud, painted with wet horizontal dots that later painters called "Mi dots" (米點). Unroll it by zooming and panning left to right.', [
@@ -124,4 +124,35 @@ n('fsgF1911_272', 'Two gibbons play in a tree. Gibbons were a speciality of the 
  (.49,.43,.33,.11,'Leaves in green','Leaves once brightly green, now darkened with age.'),
  (.90,.67,.06,.11,'Inscription','A small inscription lower right.'),
  (.04,.02,.23,.08,'Seals','Collectors\' seals at the top.'),
+])
+n('cma139824', 'A peddler of knickknacks surrounded by excited children, by the Southern Song Academy painter Li Song, who began life as a carpenter. The cart holds hundreds of tiny, precisely drawn objects: zoom right in.', [
+ (.27,.40,.10,.12,'The peddler','His hat is stuck with toys and trinkets; his face is drawn with a fine, sure line.'),
+ (.53,.17,.38,.46,'An overloaded cart','Pots, toys, baskets, tools and banners, all in fine outline with pale colour. Try to count them.'),
+ (.05,.40,.24,.47,'Children','Small children tug at the goods. Their round faces and soft bodies contrast with the wiry line of the cart.'),
+ (.07,.06,.27,.24,'Willow','Hanging willow branches frame the scene and mark the season as spring.'),
+ (.90,.56,.03,.12,'Tiny inscription','A small line of writing tucked against the right edge, easy to miss.'),
+ (.03,.41,.03,.07,'Seal','A collector\'s seal on the left edge.'),
+])
+n('cma111789', 'A Southern Song fan of a hunting party crossing the steppe, attributed to Chen Juzhong, who specialised in frontier and nomad subjects. Most of the fan is open, misty grassland.', [
+ (.06,.32,.12,.06,'Galloping rider','A rider in full gallop, legs of the horse stretched out.'),
+ (.31,.33,.31,.04,'The quarry','Fleeing animals ahead of the rider, tiny against the open plain.'),
+ (.59,.56,.32,.22,'The hunting party','A noble under a red parasol with attendants: the most detailed part of the fan.'),
+ (.20,.62,.09,.12,'A lone rider','A single horseman between the two groups links them across the empty space.'),
+ (.68,.10,.14,.04,'Birds','A flock of tiny birds rises at the top.'),
+ (.06,.40,.73,.12,'Rolling ground','The land is only faint washes and a few contour lines.'),
+])
+n('cma139830', 'Cottages in a misty autumn grove, attributed to Li Anzhong, a Song Academy painter. Fine dots of red among the green mark the season.', [
+ (.30,.31,.33,.12,'Autumn leaves','Small dots of red pigment scattered among ink and green foliage.'),
+ (.31,.52,.08,.07,'Cottage','A thatched house hidden in the grove.'),
+ (.52,.47,.18,.06,'Mist','Bands of pale silk between the trees read as mist.'),
+ (.66,.49,.17,.28,'Willow and old tree','A bare tree and a willow stand alone on the right bank.'),
+ (.175,.61,.02,.08,'Small signature','A short line of writing along the left edge of the silk.'),
+ (.18,.75,.04,.07,'Seals','Collectors\' seals in the lower corners.'),
+])
+n('cma151970', 'Waterfowl and reeds, attributed to Liang Kai: a few strokes of ink on silk, with birds crossing a wide empty sky. A classic of Chan-influenced painting.', [
+ (.25,.19,.06,.09,'Swallows','Two tiny birds high in the empty sky.'),
+ (.67,.50,.26,.07,'Flying ducks','Ducks flying low over the water, each a few quick strokes.'),
+ (.37,.55,.21,.40,'Reeds','Sharp, quick strokes that taper to a point.'),
+ (.05,.76,.30,.20,'Bank in splashed ink','A dark rock and bank in wet, blotted ink.'),
+ (.16,.66,.05,.05,'Perched bird','A small bird sits on the rock.'),
 ])

@@ -2,7 +2,11 @@ import json, math, re, os, urllib.parse
 from artists import A
 d = json.load(open('paintings_raw.json'))
 lo = json.load(open('linkonly_raw.json'))
-tiled = json.load(open('tiled.json')) if os.path.exists('tiled.json') else {}
+tiled = {}
+for _f in ('tiled.json', 'tiled2.json'):
+    if os.path.exists(_f): tiled.update(json.load(open(_f)))
+# only use tiles whose DZI exists and has been normalised
+tiled = {k: v for k, v in tiled.items() if os.path.exists(f'/home/claude/homepage/chinese-paintings/tiles/{k}_files/.fixed')}
 OUT = '/home/claude/homepage/chinese-paintings/data'
 os.makedirs(OUT, exist_ok=True)
 STEPS = [500, 960, 1280, 1920, 3840]
