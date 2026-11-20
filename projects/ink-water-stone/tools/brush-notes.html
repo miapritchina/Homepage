@@ -1,0 +1,180 @@
+<style>
+/* Brush notes: a reviewed mark and your own example pictures on every Dictionary card */
+.bnote{margin-top:10px;padding-top:10px;border-top:1px dashed var(--wash);display:grid;gap:8px}
+.bnote .bnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bnote button,.bnote label{font:inherit;font-size:14px;min-height:40px;padding:8px 14px;border-radius:999px;border:1px solid var(--wash);background:var(--card);color:var(--ink);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.bnote .revbtn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.bnote label input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.bnote label:focus-within{outline:2px solid var(--azurite);outline-offset:2px}
+.bnote .exs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.bnote .exs:empty{display:none}
+.bnote .ex{position:relative;margin:0}
+.bnote .ex img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:4px;display:block;cursor:zoom-in;background:var(--card)}
+.bnote .ex button{position:absolute;top:4px;right:4px;min-height:0;width:28px;height:28px;padding:0;justify-content:center;border-radius:50%;background:rgba(20,20,22,.7);color:#fff;border:none;font-size:16px;line-height:1}
+.bnote .bnmsg{font-size:12.5px;color:var(--ash)}
+.dcard.is-rev .eh b::after{content:" ✓";color:var(--cinnabar)}
+.bno.rv::after{content:"✓";margin-left:2px;font-size:.85em}
+.dcard .eh .bno.rv::after{content:none}
+#bnbar{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin:10px 0 0}
+#bnbar .bnprog{font-size:13px;color:var(--ash);margin-right:4px}
+#bnbar .bnprog b{color:var(--ink)}
+:root[data-bnf="rev"] #dgrid .dcard:not(.is-rev),:root[data-bnf="todo"] #dgrid .dcard.is-rev,:root[data-bnf="ex"] #dgrid .dcard:not(.has-ex){display:none}
+</style>
+<script>
+// Brush notes, kept on this device in IndexedDB: which brushes you have reviewed, and example pictures you add.
+(function () {
+  var grid = document.getElementById('dgrid'), count = document.getElementById('count');
+  if (!grid || !window.indexedDB) return;
+  var TOTAL = (typeof DATA !== 'undefined' && DATA.length) || 0;
+  var rev = {}, exs = {}, urls = {};   // rev: no -> ISO date; exs: no -> [{id, blob}]
+  var cap = function (name, props) { if (window.posthog) window.posthog.capture(name, props); };
+  var dbp = new Promise(function (ok, bad) {
+    var r = indexedDB.open('iws-brush-notes', 1);
+    r.onupgradeneeded = function () {
+      var db = r.result;
+      db.createObjectStore('reviewed', { keyPath: 'no' });
+      db.createObjectStore('examples', { keyPath: 'id', autoIncrement: true }).createIndex('no', 'no');
+    };
+    r.onsuccess = function () { ok(r.result); };
+    r.onerror = function () { bad(r.error); };
+  });
+  function tx(store, mode, fn) {
+    return dbp.then(function (db) {
+      return new Promise(function (ok, bad) {
+        var t = db.transaction(store, mode), out = fn(t.objectStore(store));
+        t.oncomplete = function () { ok(out && out.result); };
+        t.onerror = t.onabort = function () { bad(t.error); };
+      });
+    });
+  }
+  // keep pictures when the browser is short of space (an installed app usually gets this)
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {});
+
+  function noOf(card) { var b = card.querySelector('.eh .bno'); return b ? b.textContent.trim() : ''; }
+  function fmt(iso) { try { return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); } catch (e) { return ''; } }
+  function urlOf(ex) { return urls[ex.id] || (urls[ex.id] = URL.createObjectURL(ex.blob)); }
+
+  // shrink a photo to at most 1600 px on its long side before storing it
+  function shrink(file) {
+    return new Promise(function (ok) {
+      var img = new Image(), u = URL.createObjectURL(file);
+      img.onload = function () {
+        var s = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(u);
+        c.toBlob(function (b) { ok(b || file); }, 'image/jpeg', 0.85);
+      };
+      img.onerror = function () { URL.revokeObjectURL(u); ok(file); };
+      img.src = u;
+    });
+  }
+
+  function openPic(src, alt) {
+    var lb = document.getElementById('lb'); if (!lb) return;
+    lb.querySelector('img').src = src;
+    var c = lb.querySelector('.cap2'); if (c) c.textContent = alt;
+    lb.classList.remove('full'); lb.hidden = false;
+  }
+
+  function paintCard(card) {
+    var no = noOf(card); if (!no) return;
+    var box = card.querySelector('.bnote');
+    if (!box) {
+      box = document.createElement('div'); box.className = 'bnote';
+      box.innerHTML = '<div class="bnrow"><button type="button" class="revbtn" aria-pressed="false"></button>' +
+        '<label><input type="file" accept="image/*" multiple>＋ Add example pictures</label></div>' +
+        '<div class="exs"></div><p class="bnmsg" hidden></p>';
+      card.appendChild(box);
+    }
+    var on = !!rev[no], list = exs[no] || [];
+    var b = box.querySelector('.revbtn');
+    b.setAttribute('aria-pressed', on);
+    b.textContent = on ? '✓ Reviewed · ' + fmt(rev[no]) : 'Mark as reviewed';
+    card.classList.toggle('is-rev', on);
+    card.classList.toggle('has-ex', list.length > 0);
+    var wrap = box.querySelector('.exs');
+    wrap.innerHTML = list.map(function (ex, i) {
+      return '<figure class="ex" data-id="' + ex.id + '"><img src="' + urlOf(ex) + '" alt="Example ' + (i + 1) + ' for brush ' + no + '"><button type="button" aria-label="Remove this picture">×</button></figure>';
+    }).join('');
+  }
+  function paintAll() {
+    grid.querySelectorAll('.dcard').forEach(paintCard);
+    var n = Object.keys(rev).length;
+    var p = document.querySelector('#bnbar .bnprog'); if (p) p.innerHTML = 'Reviewed <b>' + n + '</b> of ' + TOTAL;
+    document.querySelectorAll('.bno').forEach(function (el) { el.classList.toggle('rv', !!rev[el.textContent.trim()]); });
+    if (document.documentElement.dataset.bnf && count) {
+      var shown = [].filter.call(grid.querySelectorAll('.dcard'), function (c) { return c.offsetParent !== null; }).length;
+      count.textContent = shown + (shown === 1 ? ' brush' : ' brushes');
+    }
+  }
+
+  // progress and a filter by your own notes, under the Dictionary's other filters
+  var bar = document.createElement('div'); bar.id = 'bnbar';
+  bar.innerHTML = '<span class="bnprog"></span>' +
+    '<button type="button" class="fchip bnf on" data-f="">Any</button>' +
+    '<button type="button" class="fchip bnf" data-f="todo">Not reviewed</button>' +
+    '<button type="button" class="fchip bnf" data-f="rev">Reviewed</button>' +
+    '<button type="button" class="fchip bnf" data-f="ex">With my pictures</button>';
+  (count ? count.parentNode.insertBefore(bar, count) : grid.parentNode.insertBefore(bar, grid));
+  bar.addEventListener('click', function (e) {
+    var c = e.target.closest('.bnf'); if (!c) return;
+    e.stopImmediatePropagation();
+    bar.querySelectorAll('.bnf').forEach(function (x) { x.classList.toggle('on', x === c); });
+    if (c.dataset.f) document.documentElement.dataset.bnf = c.dataset.f; else delete document.documentElement.dataset.bnf;
+    if (typeof render === 'function') render(); else paintAll();
+  });
+
+  grid.addEventListener('click', function (e) {
+    var card = e.target.closest('.dcard'); if (!card) return;
+    var no = noOf(card);
+    if (e.target.closest('.revbtn')) {
+      var on = !rev[no];
+      if (on) rev[no] = new Date().toISOString(); else delete rev[no];
+      tx('reviewed', 'readwrite', function (s) { return on ? s.put({ no: no, at: rev[no] }) : s.delete(no); });
+      cap('brush_reviewed', { brush: no, reviewed: on, total_reviewed: Object.keys(rev).length });
+      paintAll(); return;
+    }
+    var x = e.target.closest('.ex button');
+    if (x) {
+      var id = +x.closest('.ex').dataset.id;
+      exs[no] = (exs[no] || []).filter(function (ex) { return ex.id !== id; });
+      if (urls[id]) { URL.revokeObjectURL(urls[id]); delete urls[id]; }
+      tx('examples', 'readwrite', function (s) { return s.delete(id); });
+      cap('brush_example_removed', { brush: no });
+      paintAll(); return;
+    }
+    var im = e.target.closest('.ex img');
+    if (im) { e.stopPropagation(); openPic(im.src, im.alt); }
+  });
+  grid.addEventListener('change', function (e) {
+    var input = e.target.closest('.bnote input[type=file]'); if (!input || !input.files.length) return;
+    var card = input.closest('.dcard'), no = noOf(card), files = [].slice.call(input.files);
+    var msg = card.querySelector('.bnmsg'); msg.hidden = false; msg.textContent = 'Saving ' + files.length + ' picture' + (files.length > 1 ? 's' : '') + '…';
+    Promise.all(files.map(shrink)).then(function (blobs) {
+      return Promise.all(blobs.map(function (blob) {
+        return tx('examples', 'readwrite', function (s) { return s.add({ no: no, blob: blob, added: new Date().toISOString() }); })
+          .then(function (id) { (exs[no] = exs[no] || []).push({ id: id, blob: blob }); });
+      }));
+    }).then(function () {
+      msg.hidden = true;
+      cap('brush_example_added', { brush: no, added: files.length, total_for_brush: exs[no].length });
+      paintAll();
+    }).catch(function () { msg.textContent = 'Could not save the pictures. The device may be out of space.'; });
+    input.value = '';
+  });
+
+  // repaint whenever the Dictionary re-renders (search, filters)
+  new MutationObserver(paintAll).observe(grid, { childList: true });
+
+  Promise.all([
+    tx('reviewed', 'readonly', function (s) { return s.getAll(); }),
+    tx('examples', 'readonly', function (s) { return s.getAll(); }),
+  ]).then(function (r) {
+    (r[0] || []).forEach(function (x) { rev[x.no] = x.at; });
+    (r[1] || []).forEach(function (x) { (exs[x.no] = exs[x.no] || []).push({ id: x.id, blob: x.blob }); });
+    paintAll();
+  }).catch(function () { paintAll(); });
+})();
+</script>

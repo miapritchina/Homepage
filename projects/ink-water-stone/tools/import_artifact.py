@@ -6,7 +6,8 @@ Usage:  python3 tools/import_artifact.py <downloaded artifact index.html>
 It moves the head into a real <head>, swaps Google Fonts and the cdnjs JSZip for
 local copies, replaces the artifact-only download API with plain browser saving
 (share sheet on touch devices), adds the install/offline wiring, and adds PostHog analytics
-(tools/posthog-head.html and tools/posthog-events.html). Each step
+(tools/posthog-head.html and tools/posthog-events.html) and the brush review notes
+(tools/brush-notes.html). Each step
 asserts it matched exactly once, so a changed artifact fails loudly instead of
 producing a half-converted page. Afterwards run tools/subset_fonts.py (if new
 Chinese characters appeared) and build.py.
@@ -50,6 +51,7 @@ main_style = main_style.replace('@media (min-width:560px){.dgrid{grid-template-c
 
 posthog_head = (ROOT / 'tools' / 'posthog-head.html').read_text('utf8')
 posthog_events = (ROOT / 'tools' / 'posthog-events.html').read_text('utf8')
+brush_notes = (ROOT / 'tools' / 'brush-notes.html').read_text('utf8')
 
 head = f'''<!doctype html>
 <html lang="en">
@@ -135,7 +137,7 @@ if('serviceWorker' in navigator){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(r=>r.active&&r.active.postMessage('status')).catch(()=>{}));
 }
 </script>
-''' + posthog_events + '''</body>
+''' + brush_notes + posthog_events + '''</body>
 </html>
 ''')
 for bad in ('fonts.googleapis', 'fonts.gstatic', 'cdnjs.cloudflare'):
