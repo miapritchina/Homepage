@@ -5,7 +5,8 @@ Usage:  python3 tools/import_artifact.py <downloaded artifact index.html>
 
 It moves the head into a real <head>, swaps Google Fonts and the cdnjs JSZip for
 local copies, replaces the artifact-only download API with plain browser saving
-(share sheet on touch devices), and adds the install/offline wiring. Each step
+(share sheet on touch devices), adds the install/offline wiring, and adds PostHog analytics
+(tools/posthog-head.html and tools/posthog-events.html). Each step
 asserts it matched exactly once, so a changed artifact fails loudly instead of
 producing a half-converted page. Afterwards run tools/subset_fonts.py (if new
 Chinese characters appeared) and build.py.
@@ -47,6 +48,9 @@ theme = cut('<script>try{var _st', '</script>')
 assert main_style.count('@media (min-width:560px){.dgrid{grid-template-columns:1fr 1fr}}\n') == 1
 main_style = main_style.replace('@media (min-width:560px){.dgrid{grid-template-columns:1fr 1fr}}\n', '')
 
+posthog_head = (ROOT / 'tools' / 'posthog-head.html').read_text('utf8')
+posthog_events = (ROOT / 'tools' / 'posthog-events.html').read_text('utf8')
+
 head = f'''<!doctype html>
 <html lang="en">
 <head>
@@ -65,7 +69,7 @@ head = f'''<!doctype html>
 <link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="fonts/fonts.css">
-{wrapper_style}
+{posthog_head}{wrapper_style}
 {main_style}
 <style>
 #toast{{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:25;background:var(--ink);color:var(--paper);border-radius:999px;padding:10px 16px;font-size:13.5px;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:calc(100% - 32px);text-align:center}}
@@ -105,6 +109,7 @@ document.querySelectorAll('button.dl').forEach(b=>b.addEventListener('click',asy
     else if(b.dataset.pal){ if(typeof JSZip==='undefined') throw {code:'lib'}; data=await makePalettes(); }
     else { const r=await fetch(b.dataset.path); if(!r.ok) throw {code:'fetch'}; data=await r.blob(); }
     await saveFile(b.dataset.name,data);
+    window.posthog&&posthog.capture('file_saved',{file:b.dataset.name,kind:b.dataset.gen?'canvas':b.dataset.pal?'palettes':'texture'});
     b.textContent='Saved'; setTimeout(()=>{b.textContent=label},2500); return;
   }catch(e){
     const c=e&&e.code;
@@ -130,7 +135,7 @@ if('serviceWorker' in navigator){
   addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(()=>navigator.serviceWorker.ready).then(r=>r.active&&r.active.postMessage('status')).catch(()=>{}));
 }
 </script>
-</body>
+''' + posthog_events + '''</body>
 </html>
 ''')
 for bad in ('fonts.googleapis', 'fonts.gstatic', 'cdnjs.cloudflare'):
