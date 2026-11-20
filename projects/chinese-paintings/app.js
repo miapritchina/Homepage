@@ -16,13 +16,23 @@ const SCHOOL_ORDER = ['Six Dynasties & Tang masters','Five Dynasties masters','N
 let ALL = [], NOTES = {}, ARTISTS = {}, VIEW = [], shown = 0;
 const PAGE = 90;
 const favs = new Set(store.get('favs', []));
+const seen = new Set(store.get('seen', []));
+let autoSeen = store.get('autoSeen', true), dimSeen = store.get('dimSeen', true);
+const ph = (name, props) => { try { window.posthog && window.posthog.capture(name, props); } catch {} };
+function saveMarks() { store.set('favs', [...favs]); store.set('seen', [...seen]); updateTally(); }
+function updateTally() {
+  const n = ALL.filter(r => !r.lo).length, s = ALL.filter(r => !r.lo && seen.has(r.i)).length;
+  $('#tally').innerHTML = `<span>♥ ${favs.size}</span><span>✓ ${s.toLocaleString()} / ${n.toLocaleString()} seen</span>`;
+}
+function toggleFav(id) { favs.has(id) ? favs.delete(id) : favs.add(id); saveMarks(); ph('favourite_toggled', {painting: id, on: favs.has(id)}); return favs.has(id); }
+function toggleSeen(id, force) { const on = force ?? !seen.has(id); on ? seen.add(id) : seen.delete(id); saveMarks(); return on; }
 const F = {}; // facet key -> Set
 let yr = [300, 1912], q = '', sort = store.get('sort', 'chron'), seed = Math.random();
 
 /* ---------- facet definitions ---------- */
 const FACETS = [
   {k:'avail', label:'Availability', get:r => [r.lo ? 'Link only (no-copy museum)' : 'Zoomable here'], chips:true, open:false},
-  {k:'fav', label:'My favourites', get:r => favs.has(r.i) ? ['♥ Favourites'] : [], chips:true},
+  {k:'mine', label:'My collection', get:r => r.lo ? [] : [favs.has(r.i) ? '♥ Favourites' : null, seen.has(r.i) ? '✓ Seen' : '○ Not seen yet'].filter(Boolean), chips:true, open:true, order:['○ Not seen yet','♥ Favourites','✓ Seen']},
   {k:'notes', label:'Guided notes', get:r => NOTES[r.i] ? ['With pinned notes'] : [], chips:true},
   {k:'dyn', label:'Era · dynasty', get:r => [r.d], order:DYN, zh:DYN_ZH, open:true},
   {k:'cent', label:'Century', get:r => r.c ? [r.c] : [], order:null, sortNum:true},
@@ -53,7 +63,7 @@ Promise.all([
   readHash(true);
   $('#sort').value = sort;
   $('#sub').textContent = `${ALL.filter(r=>!r.lo).length.toLocaleString()} zoomable paintings · Chinese painting to 1912`;
-  update();
+  update(); updateTally();
   if (innerWidth <= 820) toggleFilters(false);
 });
 
@@ -151,7 +161,7 @@ function renderActive() {
   for (const f of FACETS) for (const v of (F[f.k] || [])) h += `<button data-k="${f.k}" data-v="${esc(v)}">${esc(v)} ✕</button>`;
   $('#active').innerHTML = h;
 }
-function toggle(k, v) { const s = F[k] ||= new Set(); s.has(v) ? s.delete(v) : s.add(v); update(); }
+function toggle(k, v) { const s = F[k] ||= new Set(); s.has(v) ? s.delete(v) : s.add(v); ph('filter_changed', {facet: k, value: v, on: s.has(v)}); update(); }
 
 $('#facets').addEventListener('click', e => {
   const b = e.target.closest('.opt'); if (b) return toggle(b.dataset.k, b.dataset.v);
@@ -172,8 +182,20 @@ $('#active').addEventListener('click', e => {
   if (b.dataset.clear === 'q') { q = ''; $('#q').value = ''; } else if (b.dataset.clear === 'yr') yr = [300, 1912]; else F[b.dataset.k].delete(b.dataset.v);
   update();
 });
+$('#prefs').addEventListener('change', e => {
+  if (e.target.id === 'autoSeen') { autoSeen = e.target.checked; store.set('autoSeen', autoSeen); }
+  if (e.target.id === 'dimSeen') { dimSeen = e.target.checked; store.set('dimSeen', dimSeen); update(true); }
+  if (e.target.id === 'importFile' && e.target.files[0]) e.target.files[0].text().then(t => {
+    try { const d = JSON.parse(t); (d.favs || []).forEach(x => favs.add(x)); (d.seen || []).forEach(x => seen.add(x)); saveMarks(); update(true); alert(`Imported ${d.favs?.length || 0} favourites and ${d.seen?.length || 0} seen.`); } catch { alert('That file is not an Ink & Silk backup.'); }
+  });
+});
+$('#exportBtn').onclick = () => {
+  const blob = new Blob([JSON.stringify({app: 'ink-and-silk', date: new Date().toISOString(), favs: [...favs], seen: [...seen]})], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'ink-and-silk-favourites.json'; a.click(); ph('marks_exported', {favs: favs.size, seen: seen.size});
+};
+$('#autoSeen').checked = autoSeen; $('#dimSeen').checked = dimSeen;
 $('#clear').onclick = () => { for (const k in F) F[k].clear(); q = ''; $('#q').value = ''; yr = [300, 1912]; update(); };
-let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { q = e.target.value.trim().toLowerCase(); update(); }, 220); });
+let qt, qph; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { q = e.target.value.trim().toLowerCase(); update(); clearTimeout(qph); qph = setTimeout(() => q && ph('searched', {query: q, results: VIEW.length}), 1200); }, 220); });
 $('#sort').onchange = e => { sort = e.target.value; store.set('sort', sort); if (sort === 'shuffle') seed = Math.random(); update(); };
 function toggleFilters(force) {
   const on = force ?? $('.layout').classList.contains('nofilters');
@@ -191,12 +213,20 @@ function more() {
 function card(r, n) {
   if (r.lo) return `<button class="card lo" data-n="${n}" style="--ar:.75"><span class="seal">link</span><span class="vz">${esc(r.z || r.t)}</span><span class="lbl">${esc(r.a || '')}<br>${esc(r.m)}</span></button>`;
   const ar = r.ar || 0.62;
-  return `<button class="card" data-n="${n}" style="--ar:${ar.toFixed(3)}"><img loading="lazy" decoding="async" src="${esc(r.th)}" alt="" onload="this.classList.add('ld');if(!${!!r.ar}){const a=this.naturalWidth/this.naturalHeight;if(a)this.parentNode.style.setProperty('--ar',Math.min(Math.max(a,.25),4).toFixed(3))}" onerror="this.style.display='none'">
-    ${NOTES[r.i] ? '<span class="pin">notes</span>' : ''}${favs.has(r.i) ? '<span class="fav">♥</span>' : ''}
+  return `<button class="card ${seen.has(r.i) && dimSeen ? 'isseen' : ''}" data-n="${n}" style="--ar:${ar.toFixed(3)}"><img loading="lazy" decoding="async" src="${esc(r.th)}" alt="" onload="this.classList.add('ld');if(!${!!r.ar}){const a=this.naturalWidth/this.naturalHeight;if(a)this.parentNode.style.setProperty('--ar',Math.min(Math.max(a,.25),4).toFixed(3))}" onerror="this.style.display='none';window.__thumbFail&&window.__thumbFail(this.src)">
+    ${NOTES[r.i] ? '<span class="pin">notes</span>' : ''}<span class="heart ${favs.has(r.i) ? 'on' : ''}" data-fav="${esc(r.i)}" role="button" aria-label="Favourite">${favs.has(r.i) ? '♥' : '♡'}</span>${seen.has(r.i) ? '<span class="seenmark">✓ seen</span>' : ''}
     <span class="cap"><b>${esc(r.t)}</b><span>${esc(r.a)} · ${esc(r.d)}</span></span></button>`;
 }
 new IntersectionObserver(es => { if (es[0].isIntersecting && shown < VIEW.length) more(); }, {rootMargin: '1200px'}).observe($('#more'));
-$('#grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openViewer(+c.dataset.n); });
+$('#grid').addEventListener('click', e => {
+  const h = e.target.closest('[data-fav]');
+  if (h) { e.stopPropagation(); const on = toggleFav(h.dataset.fav); h.classList.toggle('on', on); h.textContent = on ? '♥' : '♡'; if (F.mine?.size) renderFacets(); return; }
+  const c = e.target.closest('.card'); if (c) openViewer(+c.dataset.n);
+});
+
+/* thumbnail failures: one summary event per host per session, so a blocked server shows up in PostHog */
+const thumbFails = {}; let thumbT;
+window.__thumbFail = src => { let h = ''; try { h = new URL(src).host; } catch {} thumbFails[h] = (thumbFails[h] || 0) + 1; clearTimeout(thumbT); thumbT = setTimeout(() => { for (const [host, count] of Object.entries(thumbFails)) { if (count) ph('thumbnail_load_failed', {host, count}); thumbFails[host] = 0; } }, 4000); };
 
 /* ---------- viewer ---------- */
 let osd = null, cur = -1, curImg = 0, pinOn = -1;
@@ -210,7 +240,7 @@ function ensureOSD() {
     preserveImageSizeOnResize: true, imageSmoothingEnabled: true,
   });
   osd.addHandler('open', () => { requestAnimationFrame(() => { osd.forceResize(); osd.viewport.goHome(true); addPins(); }); fadeHint(); });
-  osd.addHandler('open-failed', () => { $('#osd').insertAdjacentHTML('beforeend', '<div class="loading">This image could not be loaded. Try the museum link in the notes.</div>'); });
+  osd.addHandler('open-failed', ev => { const r = VIEW[cur]; ph('image_load_failed', {painting: r?.i, museum: r?.m, url: String(ev?.source?.url || ev?.source || ''), message: ev?.message, where: 'viewer'}); try { window.posthog?.captureException(new Error('Viewer image failed: ' + (r?.m || '') + ' ' + (ev?.message || '')), {painting: r?.i}); } catch {} $('#osd').insertAdjacentHTML('beforeend', '<div class="loading">This image could not be loaded. Try the museum link in the notes.</div>'); });
   return osd;
 }
 function tileSource(im) {
@@ -223,6 +253,9 @@ function openViewer(n, img = 0) {
   $('#viewer').hidden = false; document.body.style.overflow = 'hidden';
   $('#vt').textContent = r.t; $('#vz').textContent = r.z || '';
   $('#vfav').classList.toggle('faved', favs.has(r.i)); $('#vfav').textContent = favs.has(r.i) ? '♥' : '♡';
+  if (!r.lo && autoSeen) toggleSeen(r.i, true);
+  markSeenBtn(r);
+  ph('painting_opened', {painting: r.i, title: r.t, artist: r.a, museum: r.m, source: r.lo ? 'link-only' : (r.im?.[0]?.t || ''), dynasty: r.d, has_notes: !!NOTES[r.i]});
   pinOn = -1;
   document.querySelectorAll('#osd .loading').forEach(e => e.remove());
   if (r.lo) {
@@ -250,15 +283,19 @@ function thumbOf(im, r) {
   return r.th;
 }
 $('#strip').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { curImg = +b.dataset.k; pinOn = -1; osd.open(tileSource(VIEW[cur].im[curImg])); strip(VIEW[cur]); panel(VIEW[cur]); } });
-function closeViewer() { $('#viewer').hidden = true; document.body.style.overflow = ''; cur = -1; writeHash(); }
+function closeViewer() { const n = cur; $('#viewer').hidden = true; document.body.style.overflow = ''; cur = -1; writeHash(); refreshCard(n); renderFacets(); }
 $('#vclose').onclick = closeViewer;
 $('#vprev').onclick = () => cur > 0 && openViewer(cur - 1);
 $('#vnext').onclick = () => { if (cur < VIEW.length - 1) { if (cur + 1 >= shown) more(); openViewer(cur + 1); } };
 $('#vinfo').onclick = () => { $('#panel').classList.toggle('hide'); $('#vinfo').classList.toggle('on'); };
 $('#vfav').onclick = () => {
-  const r = VIEW[cur]; favs.has(r.i) ? favs.delete(r.i) : favs.add(r.i); store.set('favs', [...favs]);
-  $('#vfav').classList.toggle('faved', favs.has(r.i)); $('#vfav').textContent = favs.has(r.i) ? '♥' : '♡';
+  const r = VIEW[cur]; const on = toggleFav(r.i);
+  $('#vfav').classList.toggle('faved', on); $('#vfav').textContent = on ? '♥' : '♡'; refreshCard(cur);
 };
+function markSeenBtn(r) { const b = $('#vseen'); b.hidden = !!r.lo; b.classList.toggle('on', seen.has(r.i)); b.textContent = seen.has(r.i) ? '✓ Seen' : 'Mark seen'; }
+$('#vseen').onclick = () => { const r = VIEW[cur]; toggleSeen(r.i); markSeenBtn(r); refreshCard(cur); };
+function refreshCard(n) { const el = document.querySelector(`.card[data-n="${n}"]`); if (el && VIEW[n]) el.outerHTML = card(VIEW[n], n); }
+function closeRefresh() { if (Object.values(F).some(s => s.size) && F.mine?.size) update(true); }
 addEventListener('keydown', e => {
   if ($('#viewer').hidden) return;
   if (e.key === 'Escape') closeViewer(); if (e.key === 'ArrowRight' && !e.target.closest('input')) $('#vnext').click(); if (e.key === 'ArrowLeft' && !e.target.closest('input')) $('#vprev').click();
@@ -281,6 +318,7 @@ function addPins() {
 }
 function goPin(k) {
   const r = VIEW[cur]; const p = pinsFor(r)[k]; if (!p) return;
+  ph('pin_opened', {painting: r.i, pin: k + 1, title: p.title});
   if (pinOn === k) { pinOn = -1; osd.viewport.goHome(); } else {
     pinOn = k; const item = osd.world.getItemAt(0); const sz = item.getContentSize();
     const rect = item.imageToViewportRectangle(p.x * sz.x, p.y * sz.y, p.w * sz.x, p.h * sz.y);

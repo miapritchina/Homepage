@@ -41,3 +41,19 @@ open-access metadata, Wikidata query results). Run `build_data.py`, then
 
 GitHub Pages limits a published site to about 1 GB, so tiles are capped at
 30 MP per painting and only the most important Cleveland works are tiled.
+
+## Your marks
+
+Each card has a heart for favourites, and opening a painting marks it seen
+(you can switch that off, or unmark it with the "Seen" button in the viewer).
+The "My collection" filter shows favourites, seen or not-yet-seen paintings.
+Marks live in this browser's local storage; "Save backup" / "Load backup" in
+the filter panel moves them between devices.
+
+## Analytics
+
+PostHog (the same project as the rest of the site, `app = chinese-paintings`)
+records pageviews, autocaptured clicks, session replays, exceptions and these
+events: `painting_opened`, `favourite_toggled`, `pin_opened`, `filter_changed`,
+`searched`, `marks_exported`, `image_load_failed` (viewer could not open an
+image) and `thumbnail_load_failed` (one summary per image host per burst).
