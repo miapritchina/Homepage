@@ -3,7 +3,7 @@
   "short_name": "Mia",
   "description": "An index of things Mia Pritchina has built and put on the web.",
   "start_url": "./",
-  "scope": "./",
+  "scope": "/",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#f2ede2",
