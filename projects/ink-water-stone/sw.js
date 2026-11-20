@@ -191,7 +191,7 @@ const FILES = {
 "img/tip.jpg": "b46db86a60",
 "img/wetdry.jpg": "9f1c17a038",
 "img/wetwet.jpg": "4db76cbd03",
-"index.html": "6892e5db06",
+"index.html": "68898608f9",
 "manifest.webmanifest": "047abd18ee",
 "ms/tb1.7_00.jpg": "527d7bc765",
 "ms/tb2.11_07.jpg": "448d56cc47",
