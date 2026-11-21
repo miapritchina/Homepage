@@ -283,7 +283,8 @@ function openViewer(n, img = 0) {
   if (r.lo) {
     $('#osd').style.display = 'none'; $('#nolink').hidden = false; $('#strip').innerHTML = ''; $('#viewer').classList.remove('hasstrip');
     const href = r.l;
-    $('#nolink').innerHTML = `<div><div class="big">${esc(r.z || r.t)}</div><p>${esc(r.m)} doesn't allow copies of its images, so this painting is shown here as a link only.</p>${href ? `<a href="${esc(href)}" target="_blank" rel="noopener">Read about it →</a>` : ''}</div>`;
+    const links = r.lk || (href ? [{l: 'Read about it', u: href}] : []);
+    $('#nolink').innerHTML = `<div><div class="big">${esc(r.z || r.t)}</div><p>${esc(r.m)} doesn't allow copies of its images, so this painting is shown here as a link only.</p><div class="lolinks">${links.map((x, k) => `<a class="${k ? '' : 'main'}" href="${esc(x.u)}" target="_blank" rel="noopener">${esc(x.l)} →</a>`).join('')}</div></div>`;
   } else {
     $('#osd').style.display = ''; $('#nolink').hidden = true;
     busy(true); ensureOSD().open(tileSource(r.im[img]));
