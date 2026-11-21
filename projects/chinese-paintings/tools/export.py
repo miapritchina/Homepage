@@ -59,10 +59,27 @@ for r in d:
                de=(r.get('desc') or '')[:1600], dy=r.get('didyouknow') or '', ins=r.get('inscription') or '', th=th, im=ims, mp=mp, ar=ar, lic=r.get('license'))
     out.append({k: v for k, v in rec.items() if v not in (None, '', [], False)})
 
+LO_URLS = json.load(open('lo_urls.json')) if os.path.exists('lo_urls.json') else {}
+DOMAIN_LABEL = [('minghuaji.dpm.org.cn', 'Zoom in on the Palace Museum\'s own viewer', 0), ('digicol.dpm.org.cn', 'Palace Museum digital collection', 1),
+                ('en.dpm.org.cn', 'Palace Museum (English)', 2), ('dpm.org.cn', 'Palace Museum page', 3), ('shanghaimuseum.net', 'Shanghai Museum page', 1),
+                ('nezu-muse.or.jp', 'Nezu Museum page', 1), ('hatakeyama-museum.org', 'Hatakeyama Museum page', 1), ('chnmuseum.cn', 'National Museum of China page', 1),
+                ('tjbwg.com', 'Tianjin Museum page', 1)]
+def lo_links(x):
+    out = []
+    for u in LO_URLS.get(x['q'], []):
+        for dom, lab, pri in DOMAIN_LABEL:
+            if dom in u: out.append((pri, lab, u)); break
+        else: out.append((5, 'Museum page', u))
+    out.sort()
+    links = [{'l': lab, 'u': u} for _, lab, u in out]
+    if x.get('zhwiki'): links.append({'l': 'Chinese Wikipedia', 'u': x['zhwiki']})
+    if x.get('enwiki'): links.append({'l': 'English Wikipedia', 'u': x['enwiki']})
+    if not links: links.append({'l': 'Wikidata record', 'u': f"https://www.wikidata.org/wiki/{x['q']}"})
+    return links
 for x in lo:
-    href = x.get('zhwiki') or x.get('enwiki') or f"https://www.wikidata.org/wiki/{x['q']}"
+    lk = lo_links(x); href = lk[0]['u']
     y = x.get('y')
-    rec = dict(i='lo' + x['q'], lo=1, t=x['title'], z=x.get('zh') or '', a=x.get('creator') or 'Unidentified artist', az=x.get('creatorZh') or '', m=x['museum'], l=href,
+    rec = dict(i='lo' + x['q'], lo=1, t=x['title'], z=x.get('zh') or '', a=x.get('creator') or 'Unidentified artist', az=x.get('creatorZh') or '', m=x['museum'], l=href, lk=lk,
                y1=y, y2=y, g=x['genre'], tg=x['tags'], se=x['season'], d=x['dyn'], c=x.get('century'), s=x.get('school'), at='See museum')
     out.append({k: v for k, v in rec.items() if v not in (None, '', [])})
 print(len(out))

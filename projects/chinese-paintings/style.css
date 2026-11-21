@@ -288,3 +288,7 @@ body.filtering .filters{padding-bottom:110px}
 .quick button.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .quick button.on span{color:var(--paper2)}
 @media (max-width:600px){.quick{margin-bottom:8px}.quick button{height:36px;font-size:12px}}
+.lolinks{display:flex;flex-direction:column;align-items:center;gap:10px}
+.lolinks a{font:14px var(--mono);color:#f0a08f}
+.lolinks a.main{display:inline-block;padding:12px 20px;border-radius:24px;background:#f2ede2;color:#121110;text-decoration:none;font-weight:500}
+.zoomhint{opacity:0}
